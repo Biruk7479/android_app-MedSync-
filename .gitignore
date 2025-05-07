@@ -1,52 +1,39 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-/app/
-# Gradle
-.gradle/
-build/
+# Kotlin/Java build output
+/build/
 **/build/
 
-# Local configuration
+# Gradle
+.gradle/
 local.properties
-*.iml
+
+# IDE files
 .idea/
+*.iml
 *.ipr
 *.iws
 
-# Keystore files
-*.jks
-*.keystore
-
 # Android Studio
-*.log
 .cxx/
 .externalNativeBuild/
 captures/
+*.log
 *.hprof
 
-# Mac OS
+# OS files
 .DS_Store
-
-# Windows
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Kotlin/Java
+# Kotlin
+.kotlinc/
 *.class
+
+# Packaging
+*.apk
+*.ap_
+*.dex
+*.aar
 *.jar
 *.war
 *.ear
@@ -56,16 +43,11 @@ gen/
 bin/
 out/
 
-# Packaging
-*.apk
-*.ap_
-*.dex
-*.aar
+# Keystore files (DO NOT push these)
+*.jks
+*.keystore
 
-# Jetpack Compose compiler cache
-.kotlinc/
-
-# Other
+# Temp files
 *.swp
 *.swo
 *.tmp
