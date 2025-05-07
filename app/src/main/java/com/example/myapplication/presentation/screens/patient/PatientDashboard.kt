@@ -28,19 +28,24 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.R
+import com.example.myapplication.data.model.AuthPreferences
 import com.example.myapplication.data.model.doctor.Doctor
 import com.example.myapplication.data.model.patient.AppointmentModel
 import com.example.myapplication.data.repository.patient.AppointmentRepository
 import com.example.myapplication.navigation.BottomNavigationBar
 
 @Composable
-fun PatientDashboardScreen(navController: NavHostController) {
+fun PatientDashboardScreen(
+    navController: NavHostController,
+    userName: String,
+    authPreferences: AuthPreferences
+) {
     val rubikFontFamily = FontFamily(
         Font(R.font.rubik_regular, FontWeight.Normal),
         Font(R.font.rubik_medium, FontWeight.Medium),
         Font(R.font.rubik_bold, FontWeight.Bold)
     )
-    val viewModel: AppointmentViewModel = viewModel { AppointmentViewModel(AppointmentRepository()) }
+    val viewModel: AppointmentViewModel = viewModel(factory = AppointmentViewModelFactory(AppointmentRepository()))
     var showSettingsPopup by remember { mutableStateOf(false) }
     var showNotificationPage by remember { mutableStateOf(false) }
 
@@ -64,7 +69,7 @@ fun PatientDashboardScreen(navController: NavHostController) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
-                        painter = painterResource(id = R.drawable.doctor), // Replace with actual profile image
+                        painter = painterResource(id = R.drawable.doctor),
                         contentDescription = "Profile",
                         modifier = Modifier
                             .size(40.dp)
@@ -79,7 +84,7 @@ fun PatientDashboardScreen(navController: NavHostController) {
                             fontFamily = rubikFontFamily
                         )
                         Text(
-                            text = "Abebe Bekele",
+                            text = userName,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = rubikFontFamily
@@ -128,8 +133,7 @@ fun PatientDashboardScreen(navController: NavHostController) {
                     text = "See all",
                     fontSize = 14.sp,
                     color = Color(0xFF6B5FF8),
-                    modifier = Modifier
-                        .clickable { /* Navigate to all doctors */ }
+                    modifier = Modifier.clickable { navController.navigate("doctors") }
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -174,7 +178,7 @@ fun PatientDashboardScreen(navController: NavHostController) {
 
             // Upcoming Appointments
             val appointments by viewModel.appointments.collectAsState()
-            appointments.take(1).forEach { appointment -> // Only show one card
+            appointments.take(1).forEach { appointment ->
                 AppointmentCard(appointment = appointment, rubikFontFamily)
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -201,13 +205,18 @@ fun PatientDashboardScreen(navController: NavHostController) {
                     Text(
                         text = "Edit Profile",
                         fontSize = 16.sp,
-                        modifier = Modifier.clickable { /* Navigate to edit profile */ }
+                        modifier = Modifier.clickable { navController.navigate("edit_profile") }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Logout",
                         fontSize = 16.sp,
-                        modifier = Modifier.clickable { navController.popBackStack() }
+                        modifier = Modifier.clickable {
+                            authPreferences.clearAuthData()
+                            navController.navigate("login") {
+                                popUpTo("patient_dashboard") { inclusive = true }
+                            }
+                        }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
@@ -277,15 +286,12 @@ fun DoctorConsultCard(rubikFontFamily: FontFamily) {
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row {
-                            val avatarIds = listOf(R.drawable.profiles) // Changed to single photo
+                            val avatarIds = listOf(R.drawable.profiles)
                             avatarIds.forEachIndexed { index, id ->
                                 Image(
                                     painter = painterResource(id = id),
                                     contentDescription = "Patient Avatar",
-                                    modifier = Modifier
-                                        .size(95.dp)
-//                                        .offset(x = (-10 * index).dp)
-
+                                    modifier = Modifier.size(95.dp)
                                 )
                             }
                         }
@@ -320,7 +326,7 @@ fun TopDoctorCard(doctor: Doctor, rubikFontFamily: FontFamily) {
             .height(180.dp)
             .border(0.8.dp, Color(0xFFD3D3D3), RoundedCornerShape(16.dp)),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.3.dp) // Reduced shadow
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.3.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -333,7 +339,7 @@ fun TopDoctorCard(doctor: Doctor, rubikFontFamily: FontFamily) {
                 modifier = Modifier
                     .size(80.dp)
                     .clip(CircleShape)
-                    .padding(top = 20.dp), // Increased top padding
+                    .padding(top = 20.dp),
                 contentScale = ContentScale.Fit
             )
             Column(
@@ -358,7 +364,7 @@ fun TopDoctorCard(doctor: Doctor, rubikFontFamily: FontFamily) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .background(Color(0xFFF1E6FF), RoundedCornerShape(4.dp)) // Light purple box covering both star and rating
+                            .background(Color(0xFFF1E6FF), RoundedCornerShape(4.dp))
                             .padding(horizontal = 4.dp, vertical = 2.dp)
                     ) {
                         Icon(
@@ -385,13 +391,14 @@ fun TopDoctorCard(doctor: Doctor, rubikFontFamily: FontFamily) {
 fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) {
     Card(
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .padding(top = 16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF6B5FF8)), // Purple background for the entire card
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF6B5FF8)),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp) // Internal padding within the purple background
+            modifier = Modifier.padding(16.dp)
         ) {
             Text(
                 text = "Upcoming Appointments",
@@ -405,11 +412,10 @@ fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) 
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Date Section
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .background(Color(0xFF8A7DFF), RoundedCornerShape(8.dp)) // Lighter purple box
+                        .background(Color(0xFF8A7DFF), RoundedCornerShape(8.dp))
                         .padding(8.dp)
                 ) {
                     Icon(
@@ -432,11 +438,10 @@ fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) 
                         fontFamily = rubikFontFamily
                     )
                 }
-                // Time Section
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .background(Color(0xFF8A7DFF), RoundedCornerShape(8.dp)) // Lighter purple box
+                        .background(Color(0xFF8A7DFF), RoundedCornerShape(8.dp))
                         .padding(8.dp)
                 ) {
                     Icon(
@@ -461,11 +466,10 @@ fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) 
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            // Doctor Section
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(8.dp)) // White box for doctor info
+                    .background(Color.White, RoundedCornerShape(8.dp))
                     .padding(8.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -495,12 +499,13 @@ fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) 
                     Spacer(modifier = Modifier.weight(1f))
                     Icon(
                         painter = painterResource(id = R.drawable.ic_chat),
-                        contentDescription = "Vector Image",
+                        contentDescription = "Chat",
                         modifier = Modifier
                             .size(20.dp)
-                            .clickable { /* Navigate to chat */ },
+                           ,
                         tint = Color(0xFF6B5FF8)
                     )
+//                     .clickable { navController.navigate("doctor_chat") }
                 }
             }
         }

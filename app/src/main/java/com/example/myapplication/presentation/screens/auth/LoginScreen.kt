@@ -19,17 +19,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.R
-import com.example.myapplication.data.repository.AuthRepository
+import com.example.myapplication.data.model.AuthPreferences
 import com.example.myapplication.data.model.LoginResponse
-import kotlinx.coroutines.flow.StateFlow
+import java.net.URLEncoder
 
 @Composable
 fun LoginScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    viewModel: LoginViewModel,
+    authPreferences: AuthPreferences
 ) {
     val rubikFontFamily = FontFamily(
         Font(R.font.rubik_regular, FontWeight.Normal),
@@ -37,31 +37,31 @@ fun LoginScreen(
         Font(R.font.rubik_bold, FontWeight.Bold)
     )
     val context = LocalContext.current
-    val viewModel: LoginViewModel = viewModel(
-        factory = LoginViewModelFactory(AuthRepository())
-    )
-    val loginState: LoginState by viewModel.loginState.collectAsState()
+    val loginState by viewModel.loginState.collectAsState()
 
     // Handle login state with navigation and feedback
     LaunchedEffect(loginState) {
         when (loginState) {
             is LoginState.Success -> {
                 val response = (loginState as LoginState.Success).response
+                authPreferences.saveAuthData(
+                    response.token,
+                    response.userId,
+                    response.role,
+                    response.name
+                )
+                val encodedName = URLEncoder.encode(response.name, "UTF-8")
                 val destination = when (response.role.lowercase()) {
-                    "patient" -> "patient_dashboard/${response.name}"
-                    "doctor" -> "doctor_dashboard/${response.name}"
-                    "triage" -> "triage_dashboard/${response.name}"
-                    "admin" -> "admin_dashboard/${response.name}"
-                    else -> {
-                        Log.e("LoginScreen", "Unknown role: ${response.role}")
-                        "patient_dashboard/${response.name}" // Default fallback
-                    }
+                    "patient" -> "patient_dashboard/$encodedName"
+                    "admin" -> "admin_dashboard/$encodedName"
+                    "doctor" -> "doctor_dashboard/$encodedName"
+                    "triage" -> "triage_dashboard/$encodedName"
+                    else -> "patient_dashboard/$encodedName"
                 }
                 navController.navigate(destination) {
                     popUpTo("login") { inclusive = true }
                 }
                 viewModel.resetState()
-                Toast.makeText(context, "Login successful: ${response.message}", Toast.LENGTH_SHORT).show()
             }
             is LoginState.Error -> {
                 Toast.makeText(context, (loginState as LoginState.Error).message, Toast.LENGTH_SHORT).show()
@@ -122,7 +122,7 @@ fun LoginScreen(
                 fontFamily = rubikFontFamily,
                 modifier = Modifier
                     .align(Alignment.End)
-                    .clickable { /* TODO: Navigate to forgot password screen */ },
+                    .clickable { navController.navigate("forgot_password") },
                 style = MaterialTheme.typography.labelSmall
             )
         }
@@ -156,18 +156,5 @@ fun LoginScreen(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
-    }
-}
-
-// ViewModel Factory for manual instantiation
-class LoginViewModelFactory(
-    private val repository: AuthRepository
-) : androidx.lifecycle.ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return LoginViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

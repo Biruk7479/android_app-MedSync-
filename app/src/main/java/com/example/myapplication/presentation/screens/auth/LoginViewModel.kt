@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.model.AuthPreferences
 import com.example.myapplication.data.model.LoginResponse
 import com.example.myapplication.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,12 +13,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class LoginViewModel(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val authPreferences: AuthPreferences
 ) : ViewModel() {
     var email by mutableStateOf("")
     var password by mutableStateOf("")
 
-    // Store user data after successful login
     var userToken by mutableStateOf("")
     var userName by mutableStateOf("")
     var userRole by mutableStateOf("")
@@ -42,6 +43,17 @@ class LoginViewModel(
                 else -> LoginState.Error(result.exceptionOrNull()?.message ?: "Login failed")
             }
         }
+    }
+
+    fun checkLoggedInState(): Boolean {
+        val isLoggedIn = authPreferences.isLoggedIn()
+        if (isLoggedIn) {
+            userToken = authPreferences.getToken() ?: ""
+            userName = authPreferences.getName() ?: ""
+            userRole = authPreferences.getRole() ?: ""
+            userId = authPreferences.getUserId() ?: ""
+        }
+        return isLoggedIn
     }
 
     fun resetState() {

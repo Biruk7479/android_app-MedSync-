@@ -24,7 +24,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.R
+import com.example.myapplication.data.model.AuthPreferences
 import com.example.myapplication.data.repository.AuthRepository
+import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -50,6 +52,7 @@ fun ProgressBar(currentStep: Int, totalSteps: Int) {
         }
     }
 }
+
 @Composable
 fun StepOne(viewModel: RegisterViewModel, rubikFontFamily: FontFamily) {
     val context = LocalContext.current
@@ -123,30 +126,30 @@ fun StepOne(viewModel: RegisterViewModel, rubikFontFamily: FontFamily) {
             fontFamily = rubikFontFamily,
             fontWeight = FontWeight.Medium
         )
-        var expanded by remember { mutableStateOf(false) }
+        var expandedGender by remember { mutableStateOf(false) }
         Box {
             OutlinedTextField(
                 value = viewModel.gender,
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
-                label = { Text("Select gender", color = Color.Gray, fontFamily = rubikFontFamily) },
+                placeholder = { Text("Select gender", color = Color.Gray, fontFamily = rubikFontFamily) },
                 trailingIcon = {
-                    IconButton(onClick = { expanded = true }) {
+                    IconButton(onClick = { expandedGender = true }) {
                         Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                     }
                 }
             )
             DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
+                expanded = expandedGender,
+                onDismissRequest = { expandedGender = false }
             ) {
                 listOf("Male", "Female", "Other").forEach { genderOption ->
                     DropdownMenuItem(
                         text = { Text(genderOption, fontFamily = rubikFontFamily) },
                         onClick = {
                             viewModel.gender = genderOption
-                            expanded = false
+                            expandedGender = false
                         }
                     )
                 }
@@ -200,7 +203,7 @@ fun StepTwo(viewModel: RegisterViewModel, rubikFontFamily: FontFamily) {
         OutlinedTextField(
             value = viewModel.bloodGroup,
             onValueChange = { viewModel.bloodGroup = it },
-            placeholder = { Text("E.g., A or B", fontFamily = rubikFontFamily) },
+            placeholder = { Text("E.g., A+ or B-", fontFamily = rubikFontFamily) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -230,7 +233,7 @@ fun StepTwo(viewModel: RegisterViewModel, rubikFontFamily: FontFamily) {
         OutlinedTextField(
             value = viewModel.emergencyContactNumber,
             onValueChange = { viewModel.emergencyContactNumber = it },
-            placeholder = { Text("0979....", fontFamily = rubikFontFamily) },
+            placeholder = { Text("E.g., +251979123456", fontFamily = rubikFontFamily) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             singleLine = true
@@ -300,7 +303,7 @@ fun StepThree(viewModel: RegisterViewModel, rubikFontFamily: FontFamily) {
         OutlinedTextField(
             value = viewModel.confirmPassword,
             onValueChange = { viewModel.confirmPassword = it },
-            placeholder = { Text("Confirm your password here", fontFamily = rubikFontFamily) },
+            placeholder = { Text("Confirm your password", fontFamily = rubikFontFamily) },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -311,7 +314,8 @@ fun StepThree(viewModel: RegisterViewModel, rubikFontFamily: FontFamily) {
 
 @Composable
 fun RegisterScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    authPreferences: AuthPreferences
 ) {
     val rubikFontFamily = FontFamily(
         Font(R.font.rubik_regular, FontWeight.Normal),
@@ -320,24 +324,23 @@ fun RegisterScreen(
     )
     val context = LocalContext.current
     val viewModel: RegisterViewModel = viewModel(
-        factory = RegisterViewModelFactory(AuthRepository())
+        factory = RegisterViewModelFactory(AuthRepository(), authPreferences)
     )
-    val registerState: RegisterState by viewModel.registerState.collectAsState()
+    val registerState by viewModel.registerState.collectAsState()
 
     LaunchedEffect(registerState) {
-        Log.d("RegisterScreen", "RegisterState changed: $registerState")
+        Log.d("RegisterScreen", "RegisterState: $registerState")
         when (registerState) {
             is RegisterState.Loading -> {
                 Toast.makeText(context, "Registering...", Toast.LENGTH_SHORT).show()
             }
             is RegisterState.Success -> {
+                val response = (registerState as RegisterState.Success).response
                 Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
-                val role = (registerState as RegisterState.Success).response.role
-                when (role) {
-                    "patient" -> navController.navigate("patient_dashboard")
-                    "doctor" -> navController.navigate("doctor_dashboard")
-                    "triage" -> navController.navigate("triage_dashboard")
-                    "admin" -> navController.navigate("admin_dashboard")
+                val encodedName = URLEncoder.encode(viewModel.name.takeIf { it.isNotBlank() } ?: "Guest", "UTF-8")
+                val destination = "patient_dashboard/$encodedName"
+                navController.navigate(destination) {
+                    popUpTo("register") { inclusive = true }
                 }
                 viewModel.resetState()
             }
@@ -348,7 +351,7 @@ fun RegisterScreen(
                 viewModel.resetState()
             }
             is RegisterState.Idle -> {
-                Log.d("RegisterScreen", "Idle state")
+                // No action needed
             }
         }
     }
@@ -364,6 +367,7 @@ fun RegisterScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .weight(1f)
         ) {
             when (viewModel.currentStep) {
                 1 -> StepOne(viewModel, rubikFontFamily)
@@ -371,7 +375,6 @@ fun RegisterScreen(
                 3 -> StepThree(viewModel, rubikFontFamily)
             }
         }
-        Spacer(modifier = Modifier.weight(1f))
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
