@@ -17,17 +17,23 @@ import com.example.myapplication.presentation.auth.LoginScreen
 import com.example.myapplication.presentation.auth.LoginViewModel
 import com.example.myapplication.presentation.auth.LoginViewModelFactory
 import com.example.myapplication.presentation.auth.RegisterScreen
+import com.example.myapplication.presentation.screens.admin.AdminAppointmentsScreen
+import com.example.myapplication.presentation.screens.admin.AdminAddScreen
 import com.example.myapplication.presentation.screens.admin.AdminDashboardScreen
+import com.example.myapplication.presentation.screens.admin.AdminProfileScreen
+import com.example.myapplication.presentation.screens.admin.AdminUsersScreen
+import com.example.myapplication.presentation.screens.admin.NotificationsScreen
 import com.example.myapplication.presentation.screens.intro.IntroScreen
 import com.example.myapplication.presentation.screens.patient.AppointmentBookingScreen
 import com.example.myapplication.presentation.screens.patient.DoctorChatScreen
 import com.example.myapplication.presentation.screens.patient.DoctorDetailScreen
 import com.example.myapplication.presentation.screens.patient.DoctorsScreen
 import com.example.myapplication.presentation.screens.patient.MedicalHistoryScreen
-import com.example.myapplication.presentation.screens.patient.NotificationScreen
 import com.example.myapplication.presentation.screens.patient.PatientDashboardScreen
 import com.example.myapplication.presentation.screens.patient.PrescriptionScreen
 import com.example.myapplication.presentation.screens.splash.SplashScreen
+import com.example.myapplication.presentation.screens.triage.TriageHomeScreen
+import com.example.myapplication.presentation.screens.triage.TriagePatientDetailsScreen
 import java.net.URLDecoder
 import java.net.URLEncoder
 
@@ -49,12 +55,13 @@ fun AppNavHost() {
             val destination = when (role.lowercase()) {
                 "patient" -> "patient_dashboard/$encodedName"
                 "doctor" -> "doctor_dashboard/$encodedName"
-                "triage" -> "triage_dashboard/$encodedName"
                 "admin" -> "admin_dashboard/$encodedName"
+                "triage" -> "triage_home"
                 else -> "patient_dashboard/$encodedName"
             }
             navController.navigate(destination) {
                 popUpTo("splash") { inclusive = true }
+                launchSingleTop = true
             }
         }
     }
@@ -85,18 +92,26 @@ fun AppNavHost() {
             val name = backStackEntry.arguments?.getString("name")?.let { URLDecoder.decode(it, "UTF-8") } ?: "Guest"
             PatientDashboardScreen(navController, name, authPreferences)
         }
+        composable(
+            route = "doctor_dashboard/{name}",
+            arguments = listOf(navArgument("name") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val name = backStackEntry.arguments?.getString("name")?.let { URLDecoder.decode(it, "UTF-8") } ?: "Guest"
+            // Replace with actual DoctorDashboardScreen
+            // Placeholder
+        }
         composable("appointment_booking") {
-            AppointmentBookingScreen(navController)
+            AppointmentBookingScreen(navController, authPreferences)
         }
         composable("doctors") {
-            DoctorsScreen(navController)
+            DoctorsScreen(navController, authPreferences)
         }
         composable(
             "doctor_detail/{doctorName}",
             arguments = listOf(navArgument("doctorName") { type = NavType.StringType })
         ) { backStackEntry ->
             val doctorName = backStackEntry.arguments?.getString("doctorName") ?: ""
-            DoctorDetailScreen(navController, doctorName)
+            DoctorDetailScreen(navController, doctorName, authPreferences)
         }
         composable(
             route = "admin_dashboard/{name}",
@@ -105,17 +120,55 @@ fun AppNavHost() {
             val name = backStackEntry.arguments?.getString("name")?.let { URLDecoder.decode(it, "UTF-8") } ?: "Guest"
             AdminDashboardScreen(navController, name, authPreferences)
         }
+        composable(
+            route = "admin_users/{name}",
+            arguments = listOf(navArgument("name") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val name = backStackEntry.arguments?.getString("name")?.let { URLDecoder.decode(it, "UTF-8") } ?: "Guest"
+            AdminUsersScreen(navController, name, authPreferences)
+        }
+        composable(
+            route = "admin_add/{name}",
+            arguments = listOf(navArgument("name") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val name = backStackEntry.arguments?.getString("name")?.let { URLDecoder.decode(it, "UTF-8") } ?: "Admin"
+            AdminAddScreen(
+                navController = navController,
+                name = name,
+                authPreferences = authPreferences
+            )
+        }
+        composable(
+            route = "admin_appointments/{name}",
+            arguments = listOf(navArgument("name") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val name = backStackEntry.arguments?.getString("name")?.let { URLDecoder.decode(it, "UTF-8") } ?: "Guest"
+            AdminAppointmentsScreen(navController, name)
+        }
+        composable("admin_profile") {
+            AdminProfileScreen(navController)
+        }
         composable("medical_history") {
-            MedicalHistoryScreen(navController)
+            MedicalHistoryScreen(navController, authPreferences)
         }
         composable("prescriptions") {
-            PrescriptionScreen(navController)
+            PrescriptionScreen(navController, authPreferences)
         }
         composable("doctor_chat") {
-            DoctorChatScreen(navController)
+            DoctorChatScreen(navController, authPreferences)
         }
         composable("notifications") {
-            NotificationScreen(navController) { navController.popBackStack() }
+            NotificationsScreen(navController) { navController.popBackStack() }
+        }
+        composable("triage_home") {
+            TriageHomeScreen(navController, authPreferences)
+        }
+        composable(
+            route = "triage_patient_details/{patientId}",
+            arguments = listOf(navArgument("patientId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
+            TriagePatientDetailsScreen(navController, authPreferences, patientId)
         }
     }
 }

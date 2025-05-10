@@ -49,7 +49,7 @@ object NetworkProvider {
             .build()
 
         Retrofit.Builder()
-            .baseUrl("http://192.168.127.240:5000/") // Use HTTP, ensure trailing slash
+            .baseUrl("http://192.168.137.1:5000/") // Use HTTP, ensure trailing slash
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -57,5 +57,20 @@ object NetworkProvider {
 
     val authApi: AuthApi by lazy {
         retrofit.create(AuthApi::class.java)
+    }
+    val doctorApi: DoctorApi by lazy {
+        retrofit.create(DoctorApi::class.java)
+    }
+    val staffApi: StaffApi by lazy {
+        retrofit.create(StaffApi::class.java)
+    }
+    val bookingApi: BookingApi by lazy {
+        retrofit.create(BookingApi::class.java)
+    }
+    val triageApi: TriageApi by lazy {
+        retrofit.create(TriageApi::class.java)
+    }
+    val patientApi: PatientApi by lazy {
+        retrofit.create(PatientApi::class.java)
     }
 }

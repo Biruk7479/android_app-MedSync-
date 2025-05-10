@@ -18,7 +18,6 @@ class LoginViewModel(
 ) : ViewModel() {
     var email by mutableStateOf("")
     var password by mutableStateOf("")
-
     var userToken by mutableStateOf("")
     var userName by mutableStateOf("")
     var userRole by mutableStateOf("")
@@ -55,6 +54,7 @@ class LoginViewModel(
         }
         return isLoggedIn
     }
+
 
     fun resetState() {
         _loginState.value = LoginState.Idle

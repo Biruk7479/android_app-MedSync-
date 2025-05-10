@@ -55,7 +55,7 @@ fun LoginScreen(
                     "patient" -> "patient_dashboard/$encodedName"
                     "admin" -> "admin_dashboard/$encodedName"
                     "doctor" -> "doctor_dashboard/$encodedName"
-                    "triage" -> "triage_dashboard/$encodedName"
+                    "triage" -> "triage_home"
                     else -> "patient_dashboard/$encodedName"
                 }
                 navController.navigate(destination) {

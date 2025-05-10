@@ -7,7 +7,7 @@ data class AppointmentModel(
     val time: String,
     val doctor: Doctor
 )
-
+//
 data class Doctor(
     val name: String,
     val specialty: String,

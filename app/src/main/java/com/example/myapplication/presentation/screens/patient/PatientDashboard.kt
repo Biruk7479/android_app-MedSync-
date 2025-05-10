@@ -24,15 +24,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.R
 import com.example.myapplication.data.model.AuthPreferences
 import com.example.myapplication.data.model.doctor.Doctor
-import com.example.myapplication.data.model.patient.AppointmentModel
+import com.example.myapplication.data.model.patient.Appointment
+import com.example.myapplication.data.model.patient.PendingBooking
 import com.example.myapplication.data.repository.patient.AppointmentRepository
 import com.example.myapplication.navigation.BottomNavigationBar
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun PatientDashboardScreen(
@@ -45,12 +47,12 @@ fun PatientDashboardScreen(
         Font(R.font.rubik_medium, FontWeight.Medium),
         Font(R.font.rubik_bold, FontWeight.Bold)
     )
-    val viewModel: AppointmentViewModel = viewModel(factory = AppointmentViewModelFactory(AppointmentRepository()))
+    val viewModel: AppointmentViewModel = viewModel(factory = AppointmentViewModelFactory(AppointmentRepository(authPreferences)))
     var showSettingsPopup by remember { mutableStateOf(false) }
     var showNotificationPage by remember { mutableStateOf(false) }
 
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController) }
+        bottomBar = { BottomNavigationBar(navController, authPreferences) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -148,8 +150,9 @@ fun PatientDashboardScreen(
                         id = "doc2",
                         name = "Dr. Marcus Horiz",
                         specialty = "Cardiologist",
-                        imageRes = R.drawable.doctor,
+                        imageRes = "R.drawable.doctor",
                         rating = 4.7f,
+                        phone = "123",
                         hospital = null,
                         experienceYears = null
                     ),
@@ -157,8 +160,9 @@ fun PatientDashboardScreen(
                         id = "doc3",
                         name = "Dr. Maria Elena",
                         specialty = "Psychologist",
-                        imageRes = R.drawable.doctor,
+                        imageRes = "R.drawable.doctor",
                         rating = 4.9f,
+                        phone = "123",
                         hospital = null,
                         experienceYears = null
                     ),
@@ -166,8 +170,9 @@ fun PatientDashboardScreen(
                         id = "doc4",
                         name = "Dr. Stevi Jes",
                         specialty = "Orthopedist",
-                        imageRes = R.drawable.doctor,
+                        imageRes = "R.drawable.doctor",
                         rating = 4.8f,
+                        phone = "123",
                         hospital = null,
                         experienceYears = null
                     )
@@ -176,11 +181,39 @@ fun PatientDashboardScreen(
                 }
             }
 
-            // Upcoming Appointments
-            val appointments by viewModel.appointments.collectAsState()
-            appointments.take(1).forEach { appointment ->
-                AppointmentCard(appointment = appointment, rubikFontFamily)
-                Spacer(modifier = Modifier.height(8.dp))
+            // Dashboard Card
+            val dashboardState by viewModel.dashboardState.collectAsState()
+            when (val state = dashboardState) {
+                is AppointmentViewModel.DashboardState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                }
+                is AppointmentViewModel.DashboardState.Success -> {
+                    val appointments = state.dashboardData.data?.upcomingAppointments ?: emptyList()
+                    val pendingBookings = state.dashboardData.data?.pendingBookings ?: emptyList()
+                    if (appointments.isNotEmpty()) {
+                        AppointmentCard(
+                            appointment = appointments.first(),
+                            rubikFontFamily = rubikFontFamily,
+                            onCancel = null
+                        )
+                    } else if (pendingBookings.isNotEmpty()) {
+                        AppointmentCard(
+                            pendingBooking = pendingBookings.first(),
+                            rubikFontFamily = rubikFontFamily,
+                            onCancel = { viewModel.cancelBooking(pendingBookings.first().id) }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                is AppointmentViewModel.DashboardState.Error -> {
+                    Text(
+                        text = state.message,
+                        fontFamily = rubikFontFamily,
+                        fontSize = 16.sp,
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         }
     }
@@ -334,7 +367,12 @@ fun TopDoctorCard(doctor: Doctor, rubikFontFamily: FontFamily) {
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Image(
-                painter = painterResource(id = doctor.imageRes),
+                painter = painterResource(
+                    id = when (doctor.imageRes) {
+                        "ic_doctor" -> R.drawable.doctor
+                        else -> R.drawable.doctor
+                    }
+                ),
                 contentDescription = doctor.name,
                 modifier = Modifier
                     .size(80.dp)
@@ -355,7 +393,7 @@ fun TopDoctorCard(doctor: Doctor, rubikFontFamily: FontFamily) {
                     fontFamily = rubikFontFamily
                 )
                 Text(
-                    text = doctor.specialty,
+                    text = doctor.specialty ?: "General Doctor",
                     fontSize = 12.sp,
                     color = Color.Gray,
                     fontFamily = rubikFontFamily
@@ -388,7 +426,12 @@ fun TopDoctorCard(doctor: Doctor, rubikFontFamily: FontFamily) {
 }
 
 @Composable
-fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) {
+fun AppointmentCard(
+    appointment: Appointment? = null,
+    pendingBooking: PendingBooking? = null,
+    rubikFontFamily: FontFamily,
+    onCancel: (() -> Unit)? = null
+) {
     Card(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
@@ -401,7 +444,7 @@ fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) 
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Upcoming Appointments",
+                text = if (appointment != null) "Upcoming Appointments" else "Pending Booking",
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
@@ -426,7 +469,7 @@ fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) 
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = appointment.date,
+                        text = formatDate(appointment?.date ?: pendingBooking?.preferredDate),
                         color = Color.White,
                         fontSize = 14.sp,
                         fontFamily = rubikFontFamily
@@ -452,7 +495,7 @@ fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) 
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = appointment.time,
+                        text = appointment?.time ?: pendingBooking?.preferredTime ?: "N/A",
                         color = Color.White,
                         fontSize = 14.sp,
                         fontFamily = rubikFontFamily
@@ -474,8 +517,8 @@ fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) 
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
-                        painter = painterResource(id = appointment.doctor.imageRes),
-                        contentDescription = appointment.doctor.name,
+                        painter = painterResource(id = R.drawable.doctor),
+                        contentDescription = appointment?.doctor?.name ?: "Pending",
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
@@ -483,29 +526,41 @@ fun AppointmentCard(appointment: AppointmentModel, rubikFontFamily: FontFamily) 
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = appointment.doctor.name,
+                            text = appointment?.doctor?.name ?: pendingBooking?.lookingFor?.capitalize() ?: "Pending",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             fontFamily = rubikFontFamily,
                             color = Color.Black
                         )
                         Text(
-                            text = appointment.doctor.specialty,
+                            text = appointment?.doctor?.specialization ?: "Awaiting Assignment",
                             fontSize = 12.sp,
                             color = Color.Gray,
                             fontFamily = rubikFontFamily
                         )
                     }
                     Spacer(modifier = Modifier.weight(1f))
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_chat),
-                        contentDescription = "Chat",
-                        modifier = Modifier
-                            .size(20.dp)
-                           ,
-                        tint = Color(0xFF6B5FF8)
-                    )
-//                     .clickable { navController.navigate("doctor_chat") }
+                    if (pendingBooking != null && onCancel != null) {
+                        Button(
+                            onClick = onCancel,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A7DFF)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = "Cancel",
+                                color = Color.White,
+                                fontFamily = rubikFontFamily,
+                                fontSize = 12.sp
+                            )
+                        }
+                    } else {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_chat),
+                            contentDescription = "Chat",
+                            modifier = Modifier.size(20.dp),
+                            tint = Color(0xFF6B5FF8)
+                        )
+                    }
                 }
             }
         }
@@ -541,5 +596,18 @@ fun NotificationScreen(navController: NavHostController, onDismiss: () -> Unit) 
                 Text("Close")
             }
         }
+    }
+}
+
+fun formatDate(dateString: String?): String {
+    if (dateString == null) return "N/A"
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+        inputFormat.timeZone = TimeZone.getTimeZone("UTC")
+        val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+        val date = inputFormat.parse(dateString)
+        date?.let { outputFormat.format(it) } ?: "N/A"
+    } catch (e: Exception) {
+        "N/A"
     }
 }

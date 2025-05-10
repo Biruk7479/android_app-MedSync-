@@ -14,10 +14,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.myapplication.R
+import com.example.myapplication.data.model.AuthPreferences
 import com.example.myapplication.navigation.BottomNavigationBar
 
 @Composable
-fun DoctorChatScreen(navController: NavHostController) {
+fun DoctorChatScreen(navController: NavHostController ,authPreferences: AuthPreferences) {
     val rubikFontFamily = FontFamily(
         Font(R.font.rubik_regular, FontWeight.Normal),
         Font(R.font.rubik_medium, FontWeight.Medium),
@@ -25,7 +26,7 @@ fun DoctorChatScreen(navController: NavHostController) {
     )
 
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController) }
+        bottomBar = { BottomNavigationBar(navController , authPreferences) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
