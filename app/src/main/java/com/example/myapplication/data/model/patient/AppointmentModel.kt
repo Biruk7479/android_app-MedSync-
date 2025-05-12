@@ -8,8 +8,8 @@ data class AppointmentModel(
     val doctor: Doctor
 )
 //
-data class Doctor(
-    val name: String,
-    val specialty: String,
-    val imageRes: Int
-)
+//data class Doctor(
+//    val name: String,
+//    val specialty: String,
+//    val imageRes: Int
+//)

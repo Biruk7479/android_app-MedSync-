@@ -204,6 +204,7 @@ import com.example.myapplication.presentation.screens.doctor.DoctorDashboardScre
 import com.example.myapplication.presentation.screens.doctor.DoctorProfileScreen
 import com.example.myapplication.presentation.screens.doctor.MedicalRecordDetailsScreen
 import com.example.myapplication.presentation.screens.doctor.PatientDetailsScreen
+import com.example.myapplication.presentation.screens.doctor.PrescriptionDetailsScreen
 import com.example.myapplication.presentation.screens.intro.IntroScreen
 import com.example.myapplication.presentation.screens.patient.AppointmentBookingScreen
 import com.example.myapplication.presentation.screens.patient.DoctorChatScreen
@@ -369,6 +370,10 @@ fun AppNavHost() {
         ) { backStackEntry ->
             val recordId = backStackEntry.arguments?.getString("recordId") ?: ""
             MedicalRecordDetailsScreen(navController, recordId, authPreferences)
+        }
+        composable("prescription_details/{prescriptionId}") { backStackEntry ->
+            val prescriptionId = backStackEntry.arguments?.getString("prescriptionId") ?: ""
+            PrescriptionDetailsScreen(navController, prescriptionId, authPreferences)
         }
     }
 }

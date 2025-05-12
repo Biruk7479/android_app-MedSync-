@@ -61,7 +61,7 @@ fun MedicalRecordDetailsScreen(
     LaunchedEffect(showSuccessMessage) {
         if (showSuccessMessage) {
             snackbarHostState.showSnackbar("Successful")
-            navController.navigate("doctor_dashboard") {
+            navController.navigate("doctor_dashboard/{name}") {
                 popUpTo(navController.graph.startDestinationId) { inclusive = true }
             }
             showSuccessMessage = false

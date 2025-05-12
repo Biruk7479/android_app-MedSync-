@@ -4,10 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.model.doctor.CreateMedicalRecordRequest
-import com.example.myapplication.data.model.doctor.MedicalRecord
-import com.example.myapplication.data.model.doctor.Patient
-import com.example.myapplication.data.model.doctor.PatientDetailsResponse
+import com.example.myapplication.data.model.doctor.*
 import com.example.myapplication.data.repository.doctor.DoctorRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +19,11 @@ class PatientDetailsViewModel(
 
     sealed class PatientDetailsState {
         object Loading : PatientDetailsState()
-        data class Success(val patient: Patient, val medicalRecords: List<MedicalRecord>) : PatientDetailsState()
+        data class Success(
+            val patientDetails: PatientDetailsResponse,
+            val medicalRecords: List<MedicalRecord>,
+            val prescriptions: List<PrescriptionSummary>
+        ) : PatientDetailsState()
         data class Error(val message: String) : PatientDetailsState()
     }
 
@@ -38,24 +39,17 @@ class PatientDetailsViewModel(
             try {
                 _patientDetailsState.value = PatientDetailsState.Loading
                 val patientResponse = repository.getPatientDetails(patientId).first()
-                Log.d("PatientDetailsViewModel", "Patient response: $patientResponse")
                 if (!patientResponse.success || patientResponse.data == null) {
                     throw Exception(patientResponse.message ?: "Failed to fetch patient details")
                 }
-                val patient = patientResponse.data.patient
                 val medicalRecordsResponse = repository.getPatientMedicalRecords(patientId).first()
-                Log.d("PatientDetailsViewModel", "Medical records response: $medicalRecordsResponse")
-                val medicalRecords = if (medicalRecordsResponse.success) {
-                    medicalRecordsResponse.data
-                } else {
-                    throw Exception(medicalRecordsResponse.message ?: "Failed to fetch medical records")
-                }
-                _patientDetailsState.value = PatientDetailsState.Success(patient, medicalRecords)
+                val medicalRecords = if (medicalRecordsResponse.success) medicalRecordsResponse.data else emptyList()
+                val prescriptionsResponse = repository.getPatientPrescriptions(patientId).first()
+                val prescriptions = if (prescriptionsResponse.success) prescriptionsResponse.prescriptions ?: emptyList() else emptyList()
+                _patientDetailsState.value = PatientDetailsState.Success(patientResponse, medicalRecords, prescriptions)
             } catch (e: Exception) {
                 Log.e("PatientDetailsViewModel", "Error: ${e.message}", e)
-                _patientDetailsState.value = PatientDetailsState.Error(
-                    e.message ?: "Failed to load patient details"
-                )
+                _patientDetailsState.value = PatientDetailsState.Error(e.message ?: "Failed to load patient details")
             }
         }
     }
@@ -63,23 +57,30 @@ class PatientDetailsViewModel(
     fun createMedicalRecord(diagnosis: String, treatment: String, notes: String) {
         viewModelScope.launch {
             try {
-                val request = CreateMedicalRecordRequest(
-                    patientId = patientId,
-                    diagnosis = diagnosis,
-                    treatment = treatment,
-                    notes = notes
-                )
+                val request = CreateMedicalRecordRequest(patientId, diagnosis, treatment, notes)
                 val response = repository.createMedicalRecord(request).first()
-                Log.d("PatientDetailsViewModel", "Create medical record response: $response")
                 if (!response.success) {
                     throw Exception(response.message ?: "Failed to create medical record")
                 }
-                fetchPatientDetails() // Refresh after creation
+                fetchPatientDetails()
             } catch (e: Exception) {
                 Log.e("PatientDetailsViewModel", "Error creating medical record: ${e.message}", e)
-                _patientDetailsState.value = PatientDetailsState.Error(
-                    e.message ?: "Failed to create medical record"
-                )
+                _patientDetailsState.value = PatientDetailsState.Error(e.message ?: "Failed to create medical record")
+            }
+        }
+    }
+
+    fun createPrescription(request: CreatePrescriptionRequest) {
+        viewModelScope.launch {
+            try {
+                val response = repository.createPrescription(request).first()
+                if (!response.success) {
+                    throw Exception(response.message ?: "Failed to create prescription")
+                }
+                fetchPatientDetails()
+            } catch (e: Exception) {
+                Log.e("PatientDetailsViewModel", "Error creating prescription: ${e.message}", e)
+                _patientDetailsState.value = PatientDetailsState.Error(e.message ?: "Failed to create prescription")
             }
         }
     }

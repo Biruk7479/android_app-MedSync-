@@ -407,4 +407,83 @@ class DoctorRepository(
     private fun generateFallbackId(): String {
         return "fallback_${System.currentTimeMillis()}"
     }
+    fun getPatientPrescriptions(patientId: String): Flow<PrescriptionListResponse> = flow {
+        try {
+            val token = authPreferences.getToken() ?: throw Exception("No token found")
+            val response = doctorApi.getPatientPrescriptions("Bearer $token", patientId)
+            if (response.success) {
+                Log.d("DoctorRepository", "Successfully fetched prescriptions: ${response.prescriptions}")
+                emit(response)
+            } else {
+                throw Exception("API call unsuccessful: ${response.message}")
+            }
+        } catch (e: Exception) {
+            Log.e("DoctorRepository", "Error fetching prescriptions: ${e.message}", e)
+            throw e
+        }
+    }.flowOn(Dispatchers.IO)
+
+    fun getPrescriptionDetails(prescriptionId: String): Flow<PrescriptionDetailResponse> = flow {
+        try {
+            val token = authPreferences.getToken() ?: throw Exception("No token found")
+            val response = doctorApi.getPrescriptionDetails("Bearer $token", prescriptionId)
+            if (response.success) {
+                Log.d("DoctorRepository", "Successfully fetched prescription details: ${response.prescription}")
+                emit(response)
+            } else {
+                throw Exception("API call unsuccessful: ${response.message}")
+            }
+        } catch (e: Exception) {
+            Log.e("DoctorRepository", "Error fetching prescription details: ${e.message}", e)
+            throw e
+        }
+    }.flowOn(Dispatchers.IO)
+
+    fun createPrescription(request: CreatePrescriptionRequest): Flow<PrescriptionDetailResponse> = flow {
+        try {
+            val token = authPreferences.getToken() ?: throw Exception("No token found")
+            val response = doctorApi.createPrescription("Bearer $token", request)
+            if (response.success) {
+                Log.d("DoctorRepository", "Successfully created prescription: ${response.prescription}")
+                emit(response)
+            } else {
+                throw Exception("API call unsuccessful: ${response.message}")
+            }
+        } catch (e: Exception) {
+            Log.e("DoctorRepository", "Error creating prescription: ${e.message}", e)
+            throw e
+        }
+    }.flowOn(Dispatchers.IO)
+
+    fun updatePrescription(prescriptionId: String, request: UpdatePrescriptionRequest): Flow<PrescriptionDetailResponse> = flow {
+        try {
+            val token = authPreferences.getToken() ?: throw Exception("No token found")
+            val response = doctorApi.updatePrescription("Bearer $token", prescriptionId, request)
+            if (response.success) {
+                Log.d("DoctorRepository", "Successfully updated prescription: ${response.prescription}")
+                emit(response)
+            } else {
+                throw Exception("API call unsuccessful: ${response.message}")
+            }
+        } catch (e: Exception) {
+            Log.e("DoctorRepository", "Error updating prescription: ${e.message}", e)
+            throw e
+        }
+    }.flowOn(Dispatchers.IO)
+
+    fun deletePrescription(prescriptionId: String): Flow<DeletePrescriptionResponse> = flow {
+        try {
+            val token = authPreferences.getToken() ?: throw Exception("No token found")
+            val response = doctorApi.deletePrescription("Bearer $token", prescriptionId)
+            if (response.success) {
+                Log.d("DoctorRepository", "Successfully deleted prescription")
+                emit(response)
+            } else {
+                throw Exception("API call unsuccessful: ${response.message}")
+            }
+        } catch (e: Exception) {
+            Log.e("DoctorRepository", "Error deleting prescription: ${e.message}", e)
+            throw e
+        }
+    }
 }

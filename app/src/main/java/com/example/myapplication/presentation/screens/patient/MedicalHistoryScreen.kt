@@ -1,5 +1,6 @@
 package com.example.myapplication.presentation.screens.patient
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -12,22 +13,31 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.R
 import com.example.myapplication.data.model.AuthPreferences
+import com.example.myapplication.data.remote.NetworkProvider
+import com.example.myapplication.data.repository.patient.PatientRepository
 import com.example.myapplication.navigation.BottomNavigationBar
 
 @Composable
-fun MedicalHistoryScreen(navController: NavHostController, authPreferences: AuthPreferences) {
+fun MedicalHistoryScreen(
+    navController: NavHostController,
+    authPreferences: AuthPreferences
+) {
+    val TAG = "MedicalHistoryScreen"
+    Log.d(TAG, "Composing MedicalHistoryScreen")
     val rubikFontFamily = FontFamily(
         Font(R.font.rubik_regular, FontWeight.Normal),
         Font(R.font.rubik_medium, FontWeight.Medium),
         Font(R.font.rubik_bold, FontWeight.Bold)
     )
-
-    // Tab state
-    var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabTitles = listOf("All Records", "My Medical Records")
+    val patientApi = NetworkProvider.patientApi
+    val viewModel: MedicalHistoryViewModel = viewModel(
+        factory = MedicalHistoryViewModelFactory(PatientRepository(authPreferences, patientApi))
+    )
+    val medicalRecordState by viewModel.medicalRecordState.collectAsState()
 
     Scaffold(
         bottomBar = { BottomNavigationBar(navController, authPreferences) }
@@ -50,100 +60,65 @@ fun MedicalHistoryScreen(navController: NavHostController, authPreferences: Auth
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Tab Row
-            TabRow(
-                selectedTabIndex = selectedTabIndex,
-                containerColor = Color.White,
-                contentColor = Color(0xFF6B5FF8)
-            ) {
-                tabTitles.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTabIndex == index,
-                        onClick = { selectedTabIndex = index },
-                        text = {
-                            Text(
-                                text = title,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                                fontFamily = rubikFontFamily
-                            )
-                        },
-                        selectedContentColor = Color(0xFF6B5FF8),
-                        unselectedContentColor = Color.Gray
+            when (val state = medicalRecordState) {
+                is MedicalHistoryViewModel.MedicalRecordState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                }
+                is MedicalHistoryViewModel.MedicalRecordState.Success -> {
+                    if (state.records.isEmpty()) {
+                        Text(
+                            text = "No medical records found",
+                            fontSize = 16.sp,
+                            fontFamily = rubikFontFamily,
+                            color = Color.Gray
+                        )
+                    } else {
+                        state.records.forEach { record ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalAlignment = Alignment.Start
+                                ) {
+                                    Text(
+                                        text = "Doctor: ${record.doctorInfo?.name ?: "N/A"}",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        fontFamily = rubikFontFamily
+                                    )
+                                    Text(
+                                        text = "Diagnosis: ${record.diagnosis ?: "N/A"}",
+                                        fontSize = 16.sp,
+                                        fontFamily = rubikFontFamily
+                                    )
+                                    Text(
+                                        text = "Treatment: ${record.treatment ?: "N/A"}",
+                                        fontSize = 14.sp,
+                                        color = Color.Gray,
+                                        fontFamily = rubikFontFamily
+                                    )
+                                    Text(
+                                        text = "Last Updated: ${record.lastUpdated ?: "N/A"}",
+                                        fontSize = 14.sp,
+                                        color = Color.Gray,
+                                        fontFamily = rubikFontFamily
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
+                is MedicalHistoryViewModel.MedicalRecordState.Error -> {
+                    Text(
+                        text = state.message,
+                        fontSize = 16.sp,
+                        fontFamily = rubikFontFamily,
+                        color = Color.Red
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Tab Content
-            when (selectedTabIndex) {
-                0 -> AllRecordsContent(rubikFontFamily)
-                1 -> MyMedicalRecordsContent(rubikFontFamily)
-            }
-        }
-    }
-}
-
-@Composable
-fun AllRecordsContent(rubikFontFamily: FontFamily) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text(
-            text = "All Records",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = rubikFontFamily
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.Start
-            ) {
-                Text(
-                    text = "List of all medical records will be here.",
-                    fontSize = 16.sp,
-                    color = Color.Gray,
-                    fontFamily = rubikFontFamily
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun MyMedicalRecordsContent(rubikFontFamily: FontFamily) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text(
-            text = "My Medical Records",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = rubikFontFamily
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.Start
-            ) {
-                Text(
-                    text = "Your personal medical records will be here.",
-                    fontSize = 16.sp,
-                    color = Color.Gray,
-                    fontFamily = rubikFontFamily
-                )
             }
         }
     }

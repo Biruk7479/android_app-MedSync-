@@ -48,10 +48,24 @@ data class MedicalHistory(
     val pastSurgeries: List<String>?
 )
 
-data class Prescription(
-    @SerializedName("_id") val id: String,
-    val patientId: String,
-    val medication: String?,
-    val dosage: String?,
-    val date: String?
+//data class Prescription(
+//    @SerializedName("_id") val id: String,
+//    val patientId: String,
+//    val medication: String?,
+//    val dosage: String?,
+//    val date: String?
+//)
+data class DoctorResponse(
+    val success: Boolean,
+    val count: Int?,
+    val data: List<Doctor>?,
+    val message: String? = null
+)
+
+data class Doctor(
+    val id: String?,
+    val name: String?,
+    val specialization: String?,
+    val rating: Double?,
+    val experienceYears: Int?
 )

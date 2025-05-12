@@ -56,4 +56,35 @@ interface DoctorApi {
         @Header("Authorization") token: String,
         @Path("recordId") recordId: String
     ): DeleteMedicalRecordResponse
+    // In DoctorApi.kt
+    @GET("/api/doctor/patients/{patientId}/prescriptions")
+    suspend fun getPatientPrescriptions(
+        @Header("Authorization") token: String,
+        @Path("patientId") patientId: String
+    ): PrescriptionListResponse
+
+    @GET("/api/doctor/prescriptions/{prescriptionId}")
+    suspend fun getPrescriptionDetails(
+        @Header("Authorization") token: String,
+        @Path("prescriptionId") prescriptionId: String
+    ): PrescriptionDetailResponse
+
+    @POST("/api/doctor/prescriptions")
+    suspend fun createPrescription(
+        @Header("Authorization") token: String,
+        @Body request: CreatePrescriptionRequest
+    ): PrescriptionDetailResponse
+
+    @PUT("/api/doctor/prescriptions/{prescriptionId}")
+    suspend fun updatePrescription(
+        @Header("Authorization") token: String,
+        @Path("prescriptionId") prescriptionId: String,
+        @Body request: UpdatePrescriptionRequest
+    ): PrescriptionDetailResponse
+
+    @DELETE("/api/doctor/prescriptions/{prescriptionId}")
+    suspend fun deletePrescription(
+        @Header("Authorization") token: String,
+        @Path("prescriptionId") prescriptionId: String
+    ): DeletePrescriptionResponse
 }
