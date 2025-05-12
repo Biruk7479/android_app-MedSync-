@@ -1,5 +1,6 @@
 package com.example.myapplication.presentation.screens.doctor
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,10 +25,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.R
 import com.example.myapplication.data.model.AuthPreferences
-import com.example.myapplication.data.model.doctor.MedicalHistory
 import com.example.myapplication.data.model.doctor.Prescription
+import com.example.myapplication.data.model.doctor.MedicalHistory
 import com.example.myapplication.data.remote.NetworkProvider
 import com.example.myapplication.data.repository.doctor.DoctorRepository
+import com.example.myapplication.navigation.DoctorBottomNavBar
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,6 +39,8 @@ fun PatientDetailsScreen(
     patientId: String,
     authPreferences: AuthPreferences
 ) {
+    val TAG = "PatientDetailsScreen"
+    Log.d(TAG, "Composing PatientDetailsScreen for patientId: $patientId")
     val rubikFontFamily = FontFamily(
         Font(R.font.rubik_regular, FontWeight.Normal),
         Font(R.font.rubik_medium, FontWeight.Medium),
@@ -46,8 +50,10 @@ fun PatientDetailsScreen(
     val viewModel: PatientDetailsViewModel = viewModel(
         factory = PatientDetailsViewModelFactory(DoctorRepository(authPreferences, doctorApi))
     )
+    Log.d(TAG, "ViewModel initialized: $viewModel")
 
     LaunchedEffect(patientId) {
+        Log.d(TAG, "Fetching patient details for patientId: $patientId")
         viewModel.fetchPatientDetails(patientId)
     }
 
@@ -67,7 +73,13 @@ fun PatientDetailsScreen(
                     contentDescription = "Back",
                     modifier = Modifier
                         .size(24.dp)
-                        .clickable { navController.popBackStack() },
+                        .clickable {
+                            Log.d(TAG, "Navigating back to doctor_dashboard")
+                            navController.navigate("doctor_dashboard/${authPreferences.getName()?.let { java.net.URLEncoder.encode(it, "UTF-8") } ?: "Guest"}") {
+                                popUpTo("doctor_dashboard/{name}") { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        },
                     tint = Color.Black
                 )
                 Spacer(modifier = Modifier.width(16.dp))
@@ -79,6 +91,13 @@ fun PatientDetailsScreen(
                     color = Color.Black
                 )
             }
+        },
+        bottomBar = {
+            DoctorBottomNavBar(
+                navController = navController,
+                authPreferences = authPreferences,
+                currentRoute = "patient_details"
+            )
         }
     ) { innerPadding ->
         Column(
@@ -132,7 +151,7 @@ fun PatientDetailsScreen(
                                     fontFamily = rubikFontFamily
                                 )
                                 Text(
-                                    text = "Gender: ${data.patient.gender}",
+                                    text = "Gender: ${data.patient.gender ?: "N/A"}",
                                     fontSize = 14.sp,
                                     color = Color.Gray,
                                     fontFamily = rubikFontFamily

@@ -1,5 +1,6 @@
 package com.example.myapplication.presentation.screens.doctor
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,13 +32,15 @@ import com.example.myapplication.data.remote.NetworkProvider
 import com.example.myapplication.data.repository.doctor.DoctorRepository
 import com.example.myapplication.navigation.DoctorBottomNavBar
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
 
 @Composable
 fun DoctorDashboardScreen(
     navController: NavHostController,
     authPreferences: AuthPreferences
 ) {
+    val TAG = "DoctorDashboardScreen"
+    Log.d(TAG, "Composing DoctorDashboardScreen")
     val rubikFontFamily = FontFamily(
         Font(R.font.rubik_regular, FontWeight.Normal),
         Font(R.font.rubik_medium, FontWeight.Medium),
@@ -47,18 +50,28 @@ fun DoctorDashboardScreen(
     val viewModel: DoctorDashboardViewModel = viewModel(
         factory = DoctorDashboardViewModelFactory(DoctorRepository(authPreferences, doctorApi))
     )
+    val patientViewModel: PatientListViewModel = viewModel(
+        factory = PatientListViewModelFactory(DoctorRepository(authPreferences, doctorApi))
+    )
+    Log.d(TAG, "ViewModel initialized: $viewModel, $patientViewModel")
     val dashboardState by viewModel.dashboardState.collectAsState()
-    val selectedDate by viewModel.selectedDate.collectAsState()
+    val patientState by patientViewModel.patientState.collectAsState()
     var showSettingsPopup by remember { mutableStateOf(false) }
     val doctorName by remember { mutableStateOf(authPreferences.getName() ?: "Doctor") }
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
+
+    LaunchedEffect(Unit) {
+        Log.d(TAG, "Fetching appointments and patients on launch")
+        viewModel.fetchAppointments()
+        patientViewModel.fetchPatients()
+    }
 
     Scaffold(
         topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFD8C4E7))
+                    .background(Color(0xFF6B5FF8))
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -77,16 +90,16 @@ fun DoctorDashboardScreen(
                     Column {
                         Text(
                             text = "Hi, Welcome Back",
-                            fontSize = 14.sp,
-                            color = Color.Gray,
+                            fontSize = 18.sp,
+                            color = Color.White,
                             fontFamily = rubikFontFamily
                         )
                         Text(
                             text = doctorName,
-                            fontSize = 18.sp,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = rubikFontFamily,
-                            color = Color.Black
+                            color = Color.White
                         )
                     }
                 }
@@ -97,7 +110,7 @@ fun DoctorDashboardScreen(
                         modifier = Modifier
                             .size(24.dp)
                             .clickable { navController.navigate("notifications") },
-                        tint = Color(0xFF6B5FF8)
+                        tint = Color.White
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Icon(
@@ -106,7 +119,7 @@ fun DoctorDashboardScreen(
                         modifier = Modifier
                             .size(24.dp)
                             .clickable { showSettingsPopup = true },
-                        tint = Color(0xFF6B5FF8)
+                        tint = Color.White
                     )
                 }
             }
@@ -136,7 +149,7 @@ fun DoctorDashboardScreen(
                     .padding(bottom = 16.dp),
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.bell),
+                        painter = painterResource(id = R.drawable.ic_search),
                         contentDescription = "Search",
                         tint = Color(0xFF6B5FF8)
                     )
@@ -147,121 +160,109 @@ fun DoctorDashboardScreen(
                 )
             )
 
-            // Calendar Section (Light Purple)
+            // Appointments Card
             Card(
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFD8C4E7))
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFD8C4E7))
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
             ) {
-                Row(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                                colors = listOf(Color(0xFFD8C4E7), Color.White)
+                            )
+                        )
+                        .padding(16.dp)
                 ) {
-                    val days = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
-                    val currentDay = viewModel.getCurrentDay()
-                    days.forEachIndexed { index, day ->
-                        val calendar = Calendar.getInstance()
-                        calendar.time = Date()
-                        calendar.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH) - 3 + index)
-                        val isSelected = calendar.time == selectedDate
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                                .background(
-                                    if (isSelected) Color(0xFF6B5FF8) else Color(0xFFD8C4E7),
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .clickable {
-                                    viewModel.setSelectedDate(calendar.time)
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = day,
-                                    fontSize = 12.sp,
-                                    color = if (isSelected) Color.White else Color.Black,
-                                    fontFamily = rubikFontFamily
-                                )
-                                Text(
-                                    text = calendar.get(Calendar.DAY_OF_MONTH).toString(),
-                                    fontSize = 16.sp,
-                                    color = if (isSelected) Color.White else Color.Black,
-                                    fontFamily = rubikFontFamily
-                                )
-                            }
-                        }
-                    }
-                }
-                Text(
-                    text = "${SimpleDateFormat("dd", Locale.getDefault()).format(selectedDate)} ${
-                        SimpleDateFormat("EEEE", Locale.getDefault()).format(selectedDate)
-                    }${if (isToday(selectedDate)) " - Today" else ""}",
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    fontFamily = rubikFontFamily,
-                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
-                )
+                    Text(
+                        text = "Upcoming Appointments",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = rubikFontFamily,
+                        color = Color(0xFF6B5FF8),
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
 
-                // Appointments Card (White inside Purple)
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
                     when (val state = dashboardState) {
                         is DoctorDashboardViewModel.DashboardState.Loading -> {
-                            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                         }
                         is DoctorDashboardViewModel.DashboardState.Success -> {
-                            val appointments = state.appointments.data.filter {
-                                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(selectedDate) ==
-                                        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(
-                                            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(it.date)
-                                                ?: Date()
-                                        )
-                            }
+                            val appointments = state.appointments.data
                             if (appointments.isEmpty()) {
                                 Text(
-                                    text = "No appointments for this date",
+                                    text = "No appointments scheduled",
                                     fontFamily = rubikFontFamily,
                                     fontSize = 16.sp,
                                     color = Color.Gray,
-                                    modifier = Modifier.padding(16.dp)
+                                    modifier = Modifier
+                                        .align(Alignment.CenterHorizontally)
+                                        .padding(16.dp)
                                 )
                             } else {
                                 LazyColumn {
                                     items(appointments) { appointment ->
-                                        Row(
+                                        Card(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
+                                                .padding(vertical = 8.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                                            elevation = CardDefaults.cardElevation(4.dp),
+                                            shape = RoundedCornerShape(12.dp)
                                         ) {
-                                            Text(
-                                                text = appointment.time,
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                fontFamily = rubikFontFamily,
-                                                color = Color(0xFF6B5FF8)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = appointment.patient.name,
-                                                fontSize = 14.sp,
-                                                fontFamily = rubikFontFamily,
-                                                color = Color.Black
-                                            )
+                                            Row(
+                                                modifier = Modifier
+                                                    .padding(12.dp)
+                                                    .fillMaxWidth(),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Column {
+                                                    Text(
+                                                        text = appointment.patientId.name,
+                                                        fontSize = 18.sp,
+                                                        fontWeight = FontWeight.Medium,
+                                                        fontFamily = rubikFontFamily,
+                                                        color = Color(0xFF4A3FB7)
+                                                    )
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(
+                                                        text = formatDisplayDate(appointment.date),
+                                                        fontSize = 14.sp,
+                                                        fontFamily = rubikFontFamily,
+                                                        color = Color.Gray
+                                                    )
+                                                    Text(
+                                                        text = "Time: ${appointment.time}",
+                                                        fontSize = 14.sp,
+                                                        fontFamily = rubikFontFamily,
+                                                        color = Color.Gray
+                                                    )
+                                                }
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .background(
+                                                            when (appointment.status) {
+                                                                "scheduled" -> Color(0xFF4CAF50)
+                                                                "pending" -> Color(0xFFFFC107)
+                                                                else -> Color.Gray
+                                                            }
+                                                        )
+                                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = appointment.status.capitalize(),
+                                                        fontSize = 12.sp,
+                                                        color = Color.White,
+                                                        fontFamily = rubikFontFamily
+                                                    )
+                                                }
+                                            }
                                         }
-                                        Divider()
                                     }
                                 }
                             }
@@ -272,7 +273,9 @@ fun DoctorDashboardScreen(
                                 fontFamily = rubikFontFamily,
                                 fontSize = 16.sp,
                                 color = Color.Red,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(16.dp)
                             )
                         }
                     }
@@ -281,7 +284,7 @@ fun DoctorDashboardScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Patients List
+            // Patients Cards
             Text(
                 text = "Patients",
                 fontSize = 18.sp,
@@ -295,17 +298,74 @@ fun DoctorDashboardScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                LazyColumn {
-                    items(listOf("Patient 1", "Patient 2", "Patient 3")) { patient ->
+                when (val state = patientState) {
+                    is PatientListViewModel.PatientState.Loading -> {
+                        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                    }
+                    is PatientListViewModel.PatientState.Success -> {
+                        val patients = state.patients.data
+                        if (patients.isEmpty()) {
+                            Text(
+                                text = "No patients found",
+                                fontFamily = rubikFontFamily,
+                                fontSize = 16.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        } else {
+                            LazyColumn {
+                                items(patients) { patient ->
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(8.dp)
+                                            .clickable {
+                                                navController.navigate("patient_details/${patient.id}")
+                                            },
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(16.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.ic_patient),
+                                                contentDescription = "Patient",
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .clip(CircleShape)
+                                            )
+                                            Spacer(modifier = Modifier.width(16.dp))
+                                            Column {
+                                                Text(
+                                                    text = patient.name,
+                                                    fontSize = 16.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    fontFamily = rubikFontFamily,
+                                                    color = Color.Black
+                                                )
+                                                Text(
+                                                    text = patient.email,
+                                                    fontSize = 12.sp,
+                                                    fontFamily = rubikFontFamily,
+                                                    color = Color.Gray
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Divider()
+                                }
+                            }
+                        }
+                    }
+                    is PatientListViewModel.PatientState.Error -> {
                         Text(
-                            text = patient,
-                            fontSize = 16.sp,
+                            text = state.message,
                             fontFamily = rubikFontFamily,
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .clickable { /* Handle patient click */ }
+                            fontSize = 16.sp,
+                            color = Color.Red,
+                            modifier = Modifier.padding(16.dp)
                         )
-                        Divider()
                     }
                 }
             }
@@ -314,7 +374,7 @@ fun DoctorDashboardScreen(
 
     // Settings Popup
     if (showSettingsPopup) {
-        Dialog(onDismissRequest = { showSettingsPopup = false }) {
+        Dialog(onDismissRequest ={ showSettingsPopup = false }) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = Color.White
@@ -352,14 +412,13 @@ fun DoctorDashboardScreen(
     }
 }
 
-fun isToday(date: Date): Boolean {
-    val today = Calendar.getInstance()
-    val selected = Calendar.getInstance()
-    selected.time = date
-    return today.get(Calendar.YEAR) == selected.get(Calendar.YEAR) &&
-            today.get(Calendar.DAY_OF_YEAR) == selected.get(Calendar.DAY_OF_YEAR)
-}
-
-fun String.capitalize(): String {
-    return replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+fun formatDisplayDate(dateString: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'Z", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+        val date = inputFormat.parse(dateString)
+        date?.let { outputFormat.format(it) } ?: "N/A"
+    } catch (e: Exception) {
+        "N/A"
+    }
 }

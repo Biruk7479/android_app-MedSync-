@@ -49,7 +49,7 @@ object NetworkProvider {
             .build()
 
         Retrofit.Builder()
-            .baseUrl("http://192.168.110.131:5000/") // Use HTTP, ensure trailing slash
+            .baseUrl("http://192.168.129.131:5000/") // Use HTTP, ensure trailing slash
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

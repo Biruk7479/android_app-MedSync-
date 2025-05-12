@@ -117,6 +117,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import android.util.Log
+import com.example.myapplication.data.model.patient.PatientResponse
 
 class DoctorRepository(
     private val authPreferences: AuthPreferences,
@@ -138,60 +139,71 @@ class DoctorRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    fun getDoctorAppointments(date: String? = null, status: String? = null): Flow<AppointmentResponse> = flow {
-        val token = authPreferences.getToken() ?: throw Exception("No token")
+    fun getDoctorAppointments(date: String?, status: String?): Flow<AppointmentResponse> = flow {
         try {
-            Log.d("DoctorRepository", "Fetching appointments with token: Bearer $token, date: $date, status: $status")
-            val response = doctorApi.getDoctorAppointments("Bearer $token", status, date)
-            Log.d("DoctorRepository", "Appointments response: $response")
+            val token = authPreferences.getToken() ?: throw Exception("No token found")
+            val response = doctorApi.getDoctorAppointments("Bearer $token", date, status)
             if (response.success) {
+                Log.d("DoctorRepository", "Successfully fetched appointments: ${response.data}")
                 emit(response)
             } else {
-                throw Exception(response.message ?: "Failed to fetch appointments")
+                throw Exception("API call unsuccessful")
             }
         } catch (e: Exception) {
             Log.e("DoctorRepository", "Error fetching appointments: ${e.message}", e)
-            throw Exception("Failed to fetch appointments: ${e.message}")
+            throw e
         }
-    }.flowOn(Dispatchers.IO)
+    }
+
+    fun getDoctorPatients(): Flow<PatientResponse> = flow {
+        try {
+            val token = authPreferences.getToken() ?: throw Exception("No token found")
+            val response = doctorApi.getDoctorPatients("Bearer $token")
+            if (response.success) {
+                Log.d("DoctorRepository", "Successfully fetched patients: ${response.data}")
+                emit(response)
+            } else {
+                throw Exception("API call unsuccessful")
+            }
+        } catch (e: Exception) {
+            Log.e("DoctorRepository", "Error fetching patients: ${e.message ?: "Unknown error"}", e)
+            throw e
+        }
+    }
 
     fun getPatientDetails(patientId: String): Flow<PatientDetailsResponse> = flow {
-        val token = authPreferences.getToken() ?: throw Exception("No token")
         try {
-            Log.d("DoctorRepository", "Fetching patient details for $patientId with token: Bearer $token")
+            val token = authPreferences.getToken() ?: throw Exception("No token found")
             val response = doctorApi.getPatientDetails("Bearer $token", patientId)
-            Log.d("DoctorRepository", "Patient details response: $response")
-            response.data?.prescriptions?.forEach { prescription ->
-                Log.d("DoctorRepository", "Prescription: id=${prescription.id}, medication=${prescription.medication}, dosage=${prescription.dosage}, date=${prescription.date}")
-            }
             if (response.success) {
+                Log.d("DoctorRepository", "Successfully fetched patient details: ${response.data}")
                 emit(response)
             } else {
-                throw Exception(response.message ?: "Failed to fetch patient details")
+                throw Exception("API call unsuccessful")
             }
         } catch (e: Exception) {
-            Log.e("DoctorRepository", "Error fetching patient details: ${e.message}", e)
-            throw Exception("Failed to fetch patient details: ${e.message}")
+            Log.e("DoctorRepository", "Error fetching patient details: ${e.message ?: "Unknown error"}", e)
+            throw e
         }
-    }.flowOn(Dispatchers.IO)
+    }
 
-    fun updateAppointmentStatus(appointmentId: String, status: String): Flow<AppointmentResponse> = flow {
-        val token = authPreferences.getToken() ?: throw Exception("No token")
-        try {
-            Log.d("DoctorRepository", "Updating appointment $appointmentId to status $status with token: Bearer $token")
-            val request = UpdateStatusRequest(status)
-            val response = doctorApi.updateAppointmentStatus("Bearer $token", appointmentId, request)
-            Log.d("DoctorRepository", "Update status response: $response")
-            if (response.success) {
-                emit(response)
-            } else {
-                throw Exception(response.message ?: "Failed to update appointment status")
-            }
-        } catch (e: Exception) {
-            Log.e("DoctorRepository", "Error updating appointment status: ${e.message}", e)
-            throw Exception("Failed to update appointment status: ${e.message}")
-        }
-    }.flowOn(Dispatchers.IO)
+//    fun updateAppointmentStatus(appointmentId: String, status: String): Flow<AppointmentResponse> = flow {
+//        val token = authPreferences.getToken() ?: throw Exception("No token")
+//        try {
+//            Log.d("DoctorRepository", "Updating appointment $appointmentId to status $status with token: Bearer $token")
+//            val request = UpdateStatusRequest(status)
+//            val response = doctorApi.updateAppointmentStatus("Bearer $token", appointmentId, request)
+//            Log.d("DoctorRepository", "Update status response: $response")
+//            if (response.success) {
+//                emit(response)
+//            } else {
+//                throw Exception(response.message?: "Failed to update appointment status")
+//            }
+//        } catch (e: Exception) {
+//            Log.e("DoctorRepository", "Error updating appointment status: ${e.message}", e)
+//            throw Exception("Failed to update appointment status: ${e.message}")
+//        }
+//    }.flowOn(Dispatchers.IO)
 
     fun formatDateForApi(date: Date): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())

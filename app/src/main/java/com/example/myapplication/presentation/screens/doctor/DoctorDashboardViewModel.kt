@@ -26,49 +26,25 @@ class DoctorDashboardViewModel(
     private val _dashboardState = MutableStateFlow<DashboardState>(DashboardState.Loading)
     val dashboardState: StateFlow<DashboardState> = _dashboardState.asStateFlow()
 
-    private val _selectedDate = MutableStateFlow<Date>(Date())
-    val selectedDate: StateFlow<Date> = _selectedDate.asStateFlow()
-
     init {
         fetchAppointments()
     }
 
-    fun fetchAppointments(date: Date? = selectedDate.value) {
+    fun fetchAppointments() {
         viewModelScope.launch {
             try {
                 _dashboardState.value = DashboardState.Loading
-                val dateString = date?.let { repository.formatDateForApi(it) }
-                repository.getDoctorAppointments(dateString, "scheduled").collect { response ->
+                repository.getDoctorAppointments(null, null).collect { response ->
                     Log.d("DoctorDashboardViewModel", "Fetched appointments: $response")
                     _dashboardState.value = DashboardState.Success(response)
                 }
             } catch (e: Exception) {
-                Log.e("DoctorDashboardViewModel", "Error fetching appointments: ${e.message}", e)
+                Log.e("DoctorDashboardViewModel", "Error fetching appointments: ${e.message ?: "Unknown error"}", e)
                 _dashboardState.value = DashboardState.Error(
                     e.message ?: "Failed to load appointments"
                 )
             }
         }
-    }
-
-    fun updateAppointmentStatus(appointmentId: String, status: String) {
-        viewModelScope.launch {
-            try {
-                repository.updateAppointmentStatus(appointmentId, status).collect {
-                    fetchAppointments() // Refresh appointments after status update
-                }
-            } catch (e: Exception) {
-                Log.e("DoctorDashboardViewModel", "Error updating status: ${e.message}", e)
-                _dashboardState.value = DashboardState.Error(
-                    e.message ?: "Failed to update appointment status"
-                )
-            }
-        }
-    }
-
-    fun setSelectedDate(date: Date) {
-        _selectedDate.value = date
-        fetchAppointments(date)
     }
 
     fun getCurrentDay(): String {
@@ -79,12 +55,12 @@ class DoctorDashboardViewModel(
     fun formatDate(dateString: String?): String {
         if (dateString == null) return "N/A"
         return try {
-            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-            inputFormat.timeZone = TimeZone.getTimeZone("UTC")
-            val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+            val inputFormat = SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'Z", Locale.getDefault())
+            val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val date = inputFormat.parse(dateString)
             date?.let { outputFormat.format(it) } ?: "N/A"
         } catch (e: Exception) {
+            Log.e("DoctorDashboardViewModel", "Error formatting date: ${e.message}")
             "N/A"
         }
     }

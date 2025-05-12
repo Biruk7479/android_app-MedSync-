@@ -178,6 +178,7 @@ package com.example.myapplication.presentation.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -198,7 +199,9 @@ import com.example.myapplication.presentation.screens.admin.AdminDashboardScreen
 import com.example.myapplication.presentation.screens.admin.AdminProfileScreen
 import com.example.myapplication.presentation.screens.admin.AdminUsersScreen
 import com.example.myapplication.presentation.screens.admin.NotificationsScreen
+import com.example.myapplication.presentation.screens.doctor.AppointmentsScreen
 import com.example.myapplication.presentation.screens.doctor.DoctorDashboardScreen
+import com.example.myapplication.presentation.screens.doctor.DoctorProfileScreen
 import com.example.myapplication.presentation.screens.doctor.PatientDetailsScreen
 import com.example.myapplication.presentation.screens.intro.IntroScreen
 import com.example.myapplication.presentation.screens.patient.AppointmentBookingScreen
@@ -219,7 +222,7 @@ fun AppNavHost() {
     SystemUiController()
     val navController = rememberNavController()
     val context = LocalContext.current
-    val authPreferences = remember { AuthPreferences(context) }
+    val authPreferences = remember{ AuthPreferences(context) }
     val loginViewModel: LoginViewModel = viewModel(
         factory = LoginViewModelFactory(AuthRepository(), authPreferences)
     )
@@ -354,10 +357,10 @@ fun AppNavHost() {
             PatientDetailsScreen(navController, patientId, authPreferences)
         }
         composable("profile") {
-            // Placeholder for ProfileScreen
+            DoctorProfileScreen(navController, authPreferences)
         }
-        composable("calendar") {
-            // Placeholder for CalendarScreen
+        composable("appointments") {
+            AppointmentsScreen(navController, authPreferences)
         }
     }
 }
