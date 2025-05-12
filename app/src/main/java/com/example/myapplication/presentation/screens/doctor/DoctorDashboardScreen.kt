@@ -27,7 +27,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.R
 import com.example.myapplication.data.model.AuthPreferences
-import com.example.myapplication.data.model.doctor.Appointment
 import com.example.myapplication.data.remote.NetworkProvider
 import com.example.myapplication.data.repository.doctor.DoctorRepository
 import com.example.myapplication.navigation.DoctorBottomNavBar
@@ -80,7 +79,7 @@ fun DoctorDashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.doctor),
+                        painter = painterResource(id = R.drawable.doctor1),
                         contentDescription = "Profile",
                         modifier = Modifier
                             .size(40.dp)

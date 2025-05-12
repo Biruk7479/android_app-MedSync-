@@ -65,7 +65,7 @@ fun DoctorDetailScreen(
             if (selectedDoctor != null && selectedDoctor?.id == doctorId) {
                 val doctor = selectedDoctor!!
                 Image(
-                    painter = painterResource(id = R.drawable.doctor),
+                    painter = painterResource(id = R.drawable.doctor1),
                     contentDescription = doctor.name,
                     modifier = Modifier
                         .size(100.dp)

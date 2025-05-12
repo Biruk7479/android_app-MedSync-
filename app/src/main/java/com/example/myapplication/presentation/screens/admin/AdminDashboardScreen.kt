@@ -1,111 +1,18 @@
-//package com.example.myapplication.presentation.screens.admin
-//
-//
-//import androidx.compose.foundation.background
-//import androidx.compose.foundation.layout.*
-//import androidx.compose.material.icons.Icons
-//import androidx.compose.material.icons.filled.ArrowBack
-//import androidx.compose.material3.*
-//import androidx.compose.runtime.Composable
-//import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.graphics.Color
-//import androidx.compose.ui.text.font.Font
-//import androidx.compose.ui.text.font.FontFamily
-//import androidx.compose.ui.text.font.FontWeight
-//import androidx.compose.ui.unit.dp
-//import androidx.compose.ui.unit.sp
-//import androidx.navigation.NavHostController
-//import com.example.myapplication.R
-//
-//@Composable
-//@OptIn(ExperimentalMaterial3Api::class)
-//fun AdminDashboardScreen(navController: NavHostController) {
-//    val rubikFontFamily = FontFamily(
-//        Font(R.font.rubik_regular, FontWeight.Normal),
-//        Font(R.font.rubik_medium, FontWeight.Medium),
-//        Font(R.font.rubik_bold, FontWeight.Bold)
-//    )
-//
-//    Scaffold(
-//        modifier = Modifier.background(Color.White),
-//        topBar = {
-//            TopAppBar(
-//                title = {
-//                    Text(
-//                        text = "Users",
-//                        fontFamily = rubikFontFamily,
-//                        fontWeight = FontWeight.Bold,
-//                        fontSize = 20.sp,
-//                        color = Color(0xFF6B5FF8)
-//                    )
-//                },
-//                navigationIcon = {
-//                    IconButton(onClick = { navController.popBackStack() }) {
-//                        Icon(
-//                            imageVector = Icons.Default.ArrowBack,
-//                            contentDescription = "Back",
-//                            tint = Color(0xFF6B5FF8)
-//                        )
-//                    }
-//                },
-//                colors = TopAppBarDefaults.topAppBarColors(
-//                    containerColor = Color.White
-//                )
-//            )
-//        }
-//    ) { innerPadding ->
-//        Column(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .background(Color.White)
-//                .padding(innerPadding)
-//                .padding(16.dp),
-//            horizontalAlignment = Alignment.CenterHorizontally
-//        ) {
-//            Text(
-//                text = "Users Management",
-//                fontFamily = rubikFontFamily,
-//                fontSize = 16.sp,
-//                color = Color.Gray
-//            )
-//            Spacer(modifier = Modifier.height(16.dp))
-//            Button(
-//                onClick = { navController.popBackStack() },
-//                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5FF8))
-//            ) {
-//                Text(
-//                    text = "Back",
-//                    color = Color.White,
-//                    fontFamily = rubikFontFamily
-//                )
-//            }
-//        }
-//    }
-//}
-//
-
 package com.example.myapplication.presentation.screens.admin
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -113,14 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.R
 import com.example.myapplication.data.model.AuthPreferences
-import com.example.myapplication.data.model.doctor.Doctor
-import com.example.myapplication.data.remote.NetworkProvider
-import com.example.myapplication.data.repository.doctor.DoctorRepository
-import com.example.myapplication.presentation.screens.admin.AdminBottomBar
 
 @Composable
 fun AdminDashboardScreen(
@@ -133,15 +35,8 @@ fun AdminDashboardScreen(
         Font(R.font.rubik_medium, FontWeight.Medium),
         Font(R.font.rubik_bold, FontWeight.Bold)
     )
-    val context = LocalContext.current
-    val viewModel: AdminUserViewModel = viewModel {
-        AdminUserViewModel(DoctorRepository(authPreferences, NetworkProvider.doctorApi))
-    }
-    var selectedTab by remember { mutableStateOf("Doctors") }
     var showSettingsPopup by remember { mutableStateOf(false) }
     var showNotificationPage by remember { mutableStateOf(false) }
-    val tabs = listOf("Doctors", "Triages", "Admins", "Patients")
-    val doctorState by viewModel.doctorState.collectAsState()
 
     Scaffold(
         modifier = Modifier
@@ -152,9 +47,14 @@ fun AdminDashboardScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFFF1F1F9), Color.White)
+                    )
+                )
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Top Section
             Row(
@@ -166,7 +66,7 @@ fun AdminDashboardScreen(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
-                        painter = painterResource(id = R.drawable.doctor),
+                        painter = painterResource(id = R.drawable.doctor1),
                         contentDescription = "Profile",
                         modifier = Modifier
                             .size(40.dp)
@@ -208,6 +108,198 @@ fun AdminDashboardScreen(
                     )
                 }
             }
+
+            // Welcome Card
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Welcome, $name!",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = rubikFontFamily,
+                        color = Color(0xFF6B5FF8)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "As an admin, you can manage users, oversee triages, and generate reports to keep the system running smoothly.",
+                        fontSize = 16.sp,
+                        fontFamily = rubikFontFamily,
+                        color = Color.Gray,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Quick Actions
+            Text(
+                text = "Quick Actions",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = rubikFontFamily,
+                color = Color.Black
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                ActionCard(
+                    title = "Manage Users",
+                    icon = R.drawable.ic_users_unselected,
+                    onClick = { navController.navigate("admin_users/$name") },
+                    rubikFontFamily = rubikFontFamily
+                )
+                ActionCard(
+                    title = "View Reports",
+                    icon = R.drawable.ic_report,
+                    onClick = { /* Navigate to reports screen */ },
+                    rubikFontFamily = rubikFontFamily
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                ActionCard(
+                    title = "Manage Triages",
+                    icon = R.drawable.ic_triage,
+                    onClick = { /* Navigate to triages screen */ },
+                    rubikFontFamily = rubikFontFamily
+                )
+                ActionCard(
+                    title = "System Settings",
+                    icon = R.drawable.cog_outline,
+                    onClick = { showSettingsPopup = true },
+                    rubikFontFamily = rubikFontFamily
+                )
+            }
+        }
+
+        // Settings Popup
+        if (showSettingsPopup) {
+            Dialog(onDismissRequest = { showSettingsPopup = false }) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White,
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(300.dp)
+                        .wrapContentHeight(align = Alignment.CenterVertically)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Settings",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = rubikFontFamily
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = "Edit Profile",
+                            fontSize = 18.sp,
+                            fontFamily = rubikFontFamily,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { navController.navigate("admin_profile") }
+                                .padding(vertical = 8.dp)
+                        )
+                        Text(
+                            text = "Logout",
+                            fontSize = 18.sp,
+                            fontFamily = rubikFontFamily,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    authPreferences.clearAuthData()
+                                    navController.navigate("login") {
+                                        popUpTo("admin_dashboard") { inclusive = true }
+                                    }
+                                }
+                                .padding(vertical = 8.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(
+                            onClick = { showSettingsPopup = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5FF8)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Close",
+                                color = Color.White,
+                                fontFamily = rubikFontFamily,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Notification Page
+        if (showNotificationPage) {
+            NotificationsScreen(navController) { showNotificationPage = false }
+        }
+    }
+}
+
+@Composable
+fun ActionCard(
+    title: String,
+    icon: Int,
+    onClick: () -> Unit,
+    rubikFontFamily: FontFamily
+) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier
+            .width(160.dp)
+            .height(120.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8EAFE)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = title,
+                modifier = Modifier.size(32.dp),
+                tint = Color(0xFF6B5FF8)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = rubikFontFamily,
+                color = Color(0xFF6B5FF8),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
         }
     }
 }

@@ -145,7 +145,7 @@ fun DoctorCard(doctor: com.example.myapplication.data.model.patient.Doctor, onCl
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(id = R.drawable.doctor),
+                painter = painterResource(id = R.drawable.doctor1),
                 contentDescription = doctor.name,
                 modifier = Modifier
                     .size(50.dp)

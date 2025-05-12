@@ -148,7 +148,7 @@ fun PatientDashboardScreen(
                 listOf(
                     Doctor(
                         id = "doc2",
-                        name = "Dr. Marcus Horiz",
+                        name = "Dr. Biruk A",
                         specialty = "Cardiologist",
                         imageRes = "R.drawable.doctor",
                         rating = 4.7f,
@@ -158,7 +158,7 @@ fun PatientDashboardScreen(
                     ),
                     Doctor(
                         id = "doc3",
-                        name = "Dr. Maria Elena",
+                        name = "Dr. Firaol",
                         specialty = "Psychologist",
                         imageRes = "R.drawable.doctor",
                         rating = 4.9f,
@@ -168,7 +168,7 @@ fun PatientDashboardScreen(
                     ),
                     Doctor(
                         id = "doc4",
-                        name = "Dr. Stevi Jes",
+                        name = "Dr. Abdulkerim",
                         specialty = "Orthopedist",
                         imageRes = "R.drawable.doctor",
                         rating = 4.8f,
@@ -223,40 +223,60 @@ fun PatientDashboardScreen(
         Dialog(onDismissRequest = { showSettingsPopup = false }) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = Color.White
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth(0.9f) // 90% of screen width
+                    .height(300.dp) // Fixed height for larger popup
+                    .wrapContentHeight(align = Alignment.CenterVertically) // Center vertically
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "Settings",
-                        fontSize = 20.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = rubikFontFamily
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                     Text(
                         text = "Edit Profile",
-                        fontSize = 16.sp,
-                        modifier = Modifier.clickable { navController.navigate("edit_profile") }
+                        fontSize = 18.sp,
+                        fontFamily = rubikFontFamily,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { navController.navigate("edit_profile") }
+                            .padding(vertical = 8.dp)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Logout",
-                        fontSize = 16.sp,
-                        modifier = Modifier.clickable {
-                            authPreferences.clearAuthData()
-                            navController.navigate("login") {
-                                popUpTo("patient_dashboard") { inclusive = true }
+                        fontSize = 18.sp,
+                        fontFamily = rubikFontFamily,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                authPreferences.clearAuthData()
+                                navController.navigate("login") {
+                                    popUpTo("patient_dashboard") { inclusive = true }
+                                }
                             }
-                        }
+                            .padding(vertical = 8.dp)
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                     Button(
                         onClick = { showSettingsPopup = false },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5FF8))
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B5FF8)),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Close", color = Color.White, fontFamily = rubikFontFamily)
+                        Text(
+                            text = "Close",
+                            color = Color.White,
+                            fontFamily = rubikFontFamily,
+                            fontSize = 16.sp
+                        )
                     }
                 }
             }
@@ -338,7 +358,7 @@ fun DoctorConsultCard(rubikFontFamily: FontFamily) {
                     }
                 }
                 Image(
-                    painter = painterResource(id = R.drawable.doctor),
+                    painter = painterResource(id = R.drawable.doctor1),
                     contentDescription = "Doctor",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -517,7 +537,7 @@ fun AppointmentCard(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
-                        painter = painterResource(id = R.drawable.doctor),
+                        painter = painterResource(id = R.drawable.doctor1),
                         contentDescription = appointment?.doctor?.name ?: "Pending",
                         modifier = Modifier
                             .size(40.dp)

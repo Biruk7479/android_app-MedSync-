@@ -10,8 +10,8 @@ class IntroViewModel : ViewModel() {
 
     private val _introScreenState = MutableStateFlow(
         IntroScreenState( // Default to first screen
-            title = "Welcome to Medsync",
-            description = "Your health companion made simple.",
+            title = "Your Health, Streamlined and Simple",
+            description = "Say goodbye to missed appointments and lost prescriptions. Medsync keeps you connected to your doctor, anytime, from anywhere.",
             imageRes = R.drawable.intro1
         )
     )
@@ -20,18 +20,18 @@ class IntroViewModel : ViewModel() {
     fun setScreen(screenNumber: Int) {
         when (screenNumber) {
             0 -> _introScreenState.value = IntroScreenState(
-                title = "Welcome to Medsync",
-                description = "Your health companion made simple.",
+                title = "Your Health, Streamlined and Simple",
+                description = "Say goodbye to missed appointments and lost prescriptions. Medsync keeps you connected to your doctor, anytime, from anywhere.",
                 imageRes = R.drawable.intro1
             )
             1 -> _introScreenState.value = IntroScreenState(
-                title = "Book Appointments",
-                description = "Easily schedule visits with your doctor.",
+                title = "Real Time Access to Your Care",
+                description = "Chat with your doctor, view your prescriptions, and receive updates without stepping outside. ",
                 imageRes = R.drawable.intro2
             )
             2 -> _introScreenState.value = IntroScreenState(
-                title = "Track Prescriptions",
-                description = "Keep up with your medications easily.",
+                title = "All Your Medical Info in One Place",
+                description = "From past reports to upcoming appointments—Medsync helps you stay organized and informed throughout your health journey.",
                 imageRes = R.drawable.intro3
             )
         }
