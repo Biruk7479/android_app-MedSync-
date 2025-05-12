@@ -202,6 +202,7 @@ import com.example.myapplication.presentation.screens.admin.NotificationsScreen
 import com.example.myapplication.presentation.screens.doctor.AppointmentsScreen
 import com.example.myapplication.presentation.screens.doctor.DoctorDashboardScreen
 import com.example.myapplication.presentation.screens.doctor.DoctorProfileScreen
+import com.example.myapplication.presentation.screens.doctor.MedicalRecordDetailsScreen
 import com.example.myapplication.presentation.screens.doctor.PatientDetailsScreen
 import com.example.myapplication.presentation.screens.intro.IntroScreen
 import com.example.myapplication.presentation.screens.patient.AppointmentBookingScreen
@@ -361,6 +362,13 @@ fun AppNavHost() {
         }
         composable("appointments") {
             AppointmentsScreen(navController, authPreferences)
+        }
+        composable(
+            route = "medical_record_details/{recordId}",
+            arguments = listOf(navArgument("recordId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val recordId = backStackEntry.arguments?.getString("recordId") ?: ""
+            MedicalRecordDetailsScreen(navController, recordId, authPreferences)
         }
     }
 }
